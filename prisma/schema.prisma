@@ -1,0 +1,230 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  ANALYST
+  SUPPORT
+}
+
+enum Sentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
+
+enum FeedbackStatus {
+  NEW
+  REVIEWED
+  IN_PROGRESS
+  RESOLVED
+  ARCHIVED
+}
+
+enum IntegrationProvider {
+  INTERCOM
+  ZENDESK
+  SLACK
+  G2
+  TRUSTPILOT
+  CUSTOM_WEBHOOK
+}
+
+model Organization {
+  id            String          @id @default(cuid())
+  name          String
+  slug          String          @unique
+  plan          String          @default("PRO")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  users         User[]
+  memberships   Membership[]
+  feedbacks     Feedback[]
+  themes        Theme[]
+  reports       Report[]
+  conversations AIConversation[]
+  integrations  Integration[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  name           String
+  passwordHash   String
+  avatar         String?
+  organizationId String
+  role           Role           @default(ANALYST)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships    Membership[]
+  conversations  AIConversation[]
+  notifications  Notification[]
+
+  @@map("users")
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role         @default(ANALYST)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+  @@map("memberships")
+}
+
+model Feedback {
+  id              String            @id @default(cuid())
+  organizationId  String
+  title           String
+  content         String
+  customerName    String
+  customerEmail   String
+  customerCompany String?
+  source          String            @default("WEBSITE") // WEBSITE, EMAIL, SURVEY, CSV, MANUAL, G2, INTERCOM, ZENDESK, OTHER
+  rating          Int               @default(5)
+  sentiment       Sentiment         @default(NEUTRAL)
+  sentimentScore  Float             @default(50.0) // Scale 0 (strongly negative) to 100 (strongly positive)
+  category        String            @default("General")
+  theme           String?
+  status          FeedbackStatus    @default(NEW)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  analysis        FeedbackAnalysis?
+
+  @@index([organizationId])
+  @@index([sentiment])
+  @@index([status])
+  @@index([category])
+  @@map("feedbacks")
+}
+
+model FeedbackAnalysis {
+  id              String    @id @default(cuid())
+  feedbackId      String    @unique
+  sentiment       Sentiment @default(NEUTRAL)
+  sentimentScore  Float     @default(50.0) // Scale 0-100
+  confidence      Float     @default(0.95) // Scale 0.00 - 1.00
+  summary         String
+  category        String    @default("General")
+  keyIssues       String[]  // Theme labels / issue tags
+  recommendations String[]
+  model           String    @default("gpt-4o")
+  analyzedAt      DateTime  @default(now())
+
+  feedback        Feedback  @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+
+  @@map("feedback_analyses")
+}
+
+model Theme {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  category       String       @default("General")
+  description    String?
+  count          Int          @default(0)
+  sentimentScore Float        @default(50.0)
+  trend          String       @default("+0%")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("themes")
+}
+
+model Report {
+  id             String       @id @default(cuid())
+  organizationId String
+  createdBy      String?      // User name or ID
+  title          String
+  type           String       @default("VOICE_OF_CUSTOMER")
+  status         String       @default("READY") // GENERATING, READY, FAILED
+  dateFrom       DateTime?
+  dateTo         DateTime?
+  summary        String?      // Executive AI summary
+  content        String       // JSON payload string with metrics, themes & quotes
+  aiModel        String       @default("gpt-4o-mini")
+  generatedAt    DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("reports")
+}
+
+model AIConversation {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  title          String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages       AIMessage[]
+
+  @@map("ai_conversations")
+}
+
+model AIMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  role           String         // "user" | "assistant"
+  content        String
+  timestamp      DateTime       @default(now())
+
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("ai_messages")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Integration {
+  id             String              @id @default(cuid())
+  organizationId String
+  provider       IntegrationProvider
+  config         String              // Encrypted JSON or token placeholder
+  status         String              @default("ACTIVE")
+  lastSyncedAt   DateTime            @default(now())
+
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("integrations")
+}
