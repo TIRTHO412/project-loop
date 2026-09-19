@@ -3,11 +3,12 @@
 /.pnpm
 /.yarn
 
-# Next.js Build Output
+# Next.js Build Output & TypeScript Build Info
 /.next/
 /out/
 /build
 /dist
+*.tsbuildinfo
 
 # Local Environment Variables & Secrets
 .env
