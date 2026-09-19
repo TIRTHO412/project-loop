@@ -2,14 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Sparkles, ArrowRight, Lock, Mail, ShieldCheck, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = React.useState("admin@loop.demo");
   const [password, setPassword] = React.useState("Password123!");
   const [isLoading, setIsLoading] = React.useState(false);
@@ -29,13 +27,13 @@ export default function LoginPage() {
 
       const data = await res.json();
 
-      if (!res.ok) {
+      if (!res.ok || !data.success) {
         setError(data.error || "Login failed. Please check your credentials.");
         setIsLoading(false);
         return;
       }
 
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch (err: any) {
       setError("Network error. Please try again.");
       setIsLoading(false);
@@ -53,10 +51,12 @@ export default function LoginPage() {
         body: JSON.stringify({ email: roleEmail, password: "Password123!", isDemoMode: true }),
       });
 
-      if (res.ok) {
-        router.push("/dashboard");
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        window.location.href = "/dashboard";
       } else {
-        setError("Demo mode login failed.");
+        setError(data.error || "Demo mode login failed.");
         setIsLoading(false);
       }
     } catch (err) {
@@ -109,29 +109,33 @@ export default function LoginPage() {
               <div className="grid grid-cols-2 gap-1.5 pt-1">
                 <button
                   type="button"
+                  disabled={isLoading}
                   onClick={() => handleQuickRoleDemo("admin@loop.demo")}
-                  className="px-2 py-1.5 rounded-lg bg-card text-[11px] font-semibold text-foreground border border-border hover:border-brand-500 transition-colors text-left"
+                  className="px-2 py-1.5 rounded-lg bg-card text-[11px] font-semibold text-foreground border border-border hover:border-brand-500 transition-colors text-left disabled:opacity-50"
                 >
                   ⚡ Admin Role
                 </button>
                 <button
                   type="button"
+                  disabled={isLoading}
                   onClick={() => handleQuickRoleDemo("manager@loop.demo")}
-                  className="px-2 py-1.5 rounded-lg bg-card text-[11px] font-semibold text-foreground border border-border hover:border-brand-500 transition-colors text-left"
+                  className="px-2 py-1.5 rounded-lg bg-card text-[11px] font-semibold text-foreground border border-border hover:border-brand-500 transition-colors text-left disabled:opacity-50"
                 >
                   💼 Manager Role
                 </button>
                 <button
                   type="button"
+                  disabled={isLoading}
                   onClick={() => handleQuickRoleDemo("analyst@loop.demo")}
-                  className="px-2 py-1.5 rounded-lg bg-card text-[11px] font-semibold text-foreground border border-border hover:border-brand-500 transition-colors text-left"
+                  className="px-2 py-1.5 rounded-lg bg-card text-[11px] font-semibold text-foreground border border-border hover:border-brand-500 transition-colors text-left disabled:opacity-50"
                 >
                   📊 Analyst Role
                 </button>
                 <button
                   type="button"
+                  disabled={isLoading}
                   onClick={() => handleQuickRoleDemo("support@loop.demo")}
-                  className="px-2 py-1.5 rounded-lg bg-card text-[11px] font-semibold text-foreground border border-border hover:border-brand-500 transition-colors text-left"
+                  className="px-2 py-1.5 rounded-lg bg-card text-[11px] font-semibold text-foreground border border-border hover:border-brand-500 transition-colors text-left disabled:opacity-50"
                 >
                   🎧 Support Role
                 </button>

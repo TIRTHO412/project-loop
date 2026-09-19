@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { db, demoUsers, demoOrganizations, demoMemberships } from "@/lib/db";
-import { setSessionCookie } from "@/lib/auth/session";
+import { createAuthResponse } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -128,22 +128,23 @@ export async function POST(request: Request) {
       });
     }
 
-    // Set authenticated session cookie
-    await setSessionCookie({
-      userId,
-      email: cleanEmail,
-      name,
-      organizationId: orgId,
-      organizationName: companyName,
-      organizationSlug: slug,
-      role: Role.ADMIN,
-    });
-
-    return NextResponse.json({
-      success: true,
-      user: { id: userId, name, email: cleanEmail, role: Role.ADMIN },
-      organization: { id: orgId, name: companyName, slug },
-    });
+    // Return authenticated session response with Set-Cookie header
+    return await createAuthResponse(
+      {
+        userId,
+        email: cleanEmail,
+        name,
+        organizationId: orgId,
+        organizationName: companyName,
+        organizationSlug: slug,
+        role: Role.ADMIN,
+      },
+      {
+        success: true,
+        user: { id: userId, name, email: cleanEmail, role: Role.ADMIN },
+        organization: { id: orgId, name: companyName, slug },
+      }
+    );
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || "An unexpected error occurred during registration." },

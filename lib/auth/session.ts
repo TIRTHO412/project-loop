@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { db, demoUsers, demoOrganizations, demoMemberships } from "@/lib/db";
 
@@ -7,7 +8,7 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.AUTH_SECRET || "project-loop-secure-auth-secret-key-min-32-chars"
 );
 
-const COOKIE_NAME = "loop_session";
+export const COOKIE_NAME = "loop_session";
 
 export interface SessionPayload {
   userId: string;
@@ -57,6 +58,37 @@ export async function setSessionCookie(payload: SessionPayload) {
     path: "/",
     maxAge: 7 * 24 * 60 * 60, // 7 days
   });
+}
+
+/**
+ * Helper to construct an authenticated NextResponse with Set-Cookie header
+ */
+export async function createAuthResponse(payload: SessionPayload, bodyData: any, status = 200) {
+  const token = await encryptSession(payload);
+  const response = NextResponse.json(bodyData, { status });
+
+  response.cookies.set(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60,
+  });
+
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set(COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60,
+    });
+  } catch (e) {
+    // Read-only cookieStore fallback
+  }
+
+  return response;
 }
 
 /**
