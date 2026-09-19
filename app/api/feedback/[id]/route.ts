@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { mockFeedbackList } from "@/lib/db/seed-data";
 import { requireAuth, requireRole } from "@/lib/auth/session";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

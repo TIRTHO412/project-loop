@@ -5,6 +5,8 @@ import { mockFeedbackList } from "@/lib/db/seed-data";
 import { requireRole } from "@/lib/auth/session";
 import { analyzeFeedbackWithAI } from "@/lib/ai";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     // RBAC: ADMIN or MANAGER can import CSV data

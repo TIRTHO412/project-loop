@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { getSession, requireRole } from "@/lib/auth/session";
 import { generateReportData, memoryReportsStore } from "@/lib/reports";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const session = await getSession();

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSession, requireAuth } from "@/lib/auth/session";
+import { requireAuth } from "@/lib/auth/session";
 import { getOrganizationAnalytics } from "@/lib/analytics";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {

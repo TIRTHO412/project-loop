@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/session";
 import { memoryReportsStore } from "@/lib/reports";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

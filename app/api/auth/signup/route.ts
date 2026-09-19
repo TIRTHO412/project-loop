@@ -4,6 +4,8 @@ import { Role } from "@prisma/client";
 import { db, demoUsers, demoOrganizations, demoMemberships } from "@/lib/db";
 import { setSessionCookie } from "@/lib/auth/session";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();

@@ -5,6 +5,8 @@ import { mockFeedbackList } from "@/lib/db/seed-data";
 import { getSession, requireAuth } from "@/lib/auth/session";
 import { analyzeFeedbackWithAI } from "@/lib/ai";
 
+export const dynamic = "force-dynamic";
+
 // In-memory feedback store fallback when DB is disconnected
 let memoryFeedbackStore: any[] = [...mockFeedbackList];
 

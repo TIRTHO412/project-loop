@@ -5,6 +5,8 @@ import { requireRole } from "@/lib/auth/session";
 import { analyzeFeedbackWithAI } from "@/lib/ai";
 import { mockFeedbackList } from "@/lib/db/seed-data";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
